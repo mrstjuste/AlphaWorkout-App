@@ -10,9 +10,25 @@
 		6C0ED3472D52A4CD0082A390 /* AlphaWorkout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlphaWorkout.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6C875DA42D59491600733263 /* Exceptions for "AlphaWorkout" folder in "AlphaWorkout" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Preview Content/Untitled.swift",
+				"Untitled 2.swift",
+				"Untitled 3.swift",
+				"Untitled 4.swift",
+			);
+			target = 6C0ED3462D52A4CD0082A390 /* AlphaWorkout */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6C0ED3492D52A4CD0082A390 /* AlphaWorkout */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6C875DA42D59491600733263 /* Exceptions for "AlphaWorkout" folder in "AlphaWorkout" target */,
+			);
 			path = AlphaWorkout;
 			sourceTree = "<group>";
 		};
