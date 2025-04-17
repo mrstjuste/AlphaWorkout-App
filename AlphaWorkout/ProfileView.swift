@@ -2,104 +2,135 @@ import SwiftUI
 import Charts
 
 struct ProfileView: View {
-    let username = "Brian St. Juste"
-    @State private var height = "6'0\""
-    @State private var weight = "185 lbs"
-    let profilePic = "profile_image"
-    
-    let workoutData: [(type: String, count: Int, color: Color)] = [
-        ("Strength Training", 15, .red),
-        ("Conditioning", 10, .yellow),
-        ("Recovery", 5, .green)
-    ]
-    
-    let daysActive: [Int] = [1, 2, 3, 6, 7, 10, 12, 14, 16, 18, 20, 22, 25, 28]
-    
+    var username: String = "mrstjuste"
+    var profileCompletion: Double = 0.8
+
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Image(profilePic)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.gray, lineWidth: 2))
-                    .padding(.leading)
-                
-                VStack(alignment: .leading) {
-                    Text(username)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    HStack {
-                        Text("Height: ")
-                        TextField("Enter height", text: $height)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 100)
-                    }
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
 
+                    // Header
                     HStack {
-                        Text("Weight: ")
-                        TextField("Enter weight", text: $weight)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 100)
-                    }
-
-                }
-                .padding(.leading)
-                Spacer()
-            }
-            .padding(.top)
-            
-            HStack(alignment: .top) {
-                Chart {
-                    ForEach(workoutData, id: \.type) { data in
-                        SectorMark(
-                            angle: .value("Workouts", data.count),
-                            innerRadius: .ratio(0.5),
-                            outerRadius: .ratio(1)
-                        )
-                        .foregroundStyle(data.color)
-                    }
-                }
-                .frame(width: 150, height: 150)
-                .padding()
-                
-                VStack(alignment: .leading) {
-                    Text("Workout Summary")
-                        .font(.headline)
-                    ForEach(workoutData, id: \.type) { data in
-                        HStack {
-                            Circle()
-                                .fill(data.color)
-                                .frame(width: 10, height: 10)
-                            Text("\(data.type): \(data.count)")
-                                .font(.subheadline)
+                        Spacer()
+                        Button(action: {}) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        Button(action: {}) {
+                            Image(systemName: "gear")
                         }
                     }
-                }
-                .padding()
-            }
-            
-            VStack(alignment: .leading) {
-                Text("Monthly Activity")
-                    .font(.headline)
-                    .padding(.top)
-                
-                let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
-                LazyVGrid(columns: columns, spacing: 4) {
-                    ForEach(1...30, id: \.self) { day in
-                        RoundedRectangle(cornerRadius: 4)
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(daysActive.contains(day) ? .green : .gray.opacity(0.3))
-                            .overlay(Text("\(day)").font(.caption2))
+                    .padding(.horizontal)
+
+                    // Profile
+                    VStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 60, height: 60)
+                            .overlay(Text("B").font(.title).foregroundColor(.white))
+
+                        Text(username)
+                            .font(.title3)
+                            .bold()
+
+                        HStack(spacing: 30) {
+                            VStack {
+                                Text("0").bold()
+                                Text("Workouts")
+                            }
+                            VStack {
+                                Text("0").bold()
+                                Text("Followers")
+                            }
+                            VStack {
+                                Text("0").bold()
+                                Text("Following")
+                            }
+                        }
+                        .foregroundColor(.gray)
                     }
+
+                    // Profile Completion
+                    Button(action: {}) {
+                        HStack {
+                            Text("Your profile is \(Int(profileCompletion * 100))% finished")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .padding()
+                        .background(Color(.systemBlue).opacity(0.2))
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+
+                    // Chart and Filter Buttons
+                    VStack(alignment: .leading) {
+                        UserDataPoints()
+
+                        HStack {
+                            Button("Duration") {}.buttonStyle(FilterButtonStyle(selected: true))
+                            Button("Volume") {}.buttonStyle(FilterButtonStyle())
+                            Button("Reps") {}.buttonStyle(FilterButtonStyle())
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    // Dashboard Buttons
+                    VStack(spacing: 10) {
+                        HStack(spacing: 10) {
+                            DashboardButton(title: "Statistics", icon: "chart.line.uptrend.xyaxis")
+                            DashboardButton(title: "Exercises", icon: "dumbbell.fill")
+                        }
+                        HStack(spacing: 10) {
+                            DashboardButton(title: "Measures", icon: "figure.stand")
+                            DashboardButton(title: "Calendar", icon: "calendar")
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    Spacer(minLength: 100)
                 }
+                .padding(.top)
+                .navigationTitle(username)
+                .navigationBarTitleDisplayMode(.inline)
             }
-            .padding()
-            Spacer()
         }
     }
 }
+
+struct DashboardButton: View {
+    let title: String
+    let icon: String
+
+    var body: some View {
+        Button(action: {}) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                Text(title)
+                    .font(.footnote)
+            }
+            .frame(maxWidth: .infinity, minHeight: 80)
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
+    }
+}
+
+struct FilterButtonStyle: ButtonStyle {
+    var selected: Bool = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.footnote)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(selected ? Color.blue : Color(.systemGray5))
+            .foregroundColor(selected ? .white : .primary)
+            .cornerRadius(10)
+    }
+}
+
 
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
