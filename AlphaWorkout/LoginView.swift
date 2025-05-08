@@ -8,24 +8,26 @@
 import SwiftUI
 
 struct LoginView: View {
-    @State private var email: String = ""
+    @State private var username: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String?
+    @State private var isLoading: Bool = false
     @State private var isLoggedIn: Bool = false
-    @State private var username: String = ""
+
+    @AppStorage("username") var storedUsername: String = ""
+    @AppStorage("authToken") var authToken: String = ""
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 Spacer()
-                
+
                 Text("Login")
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                TextField("Email", text: $email)
+                TextField("Username", text: $username)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding(.horizontal)
 
@@ -38,6 +40,11 @@ struct LoginView: View {
                         .foregroundColor(.red)
                 }
 
+                if isLoading {
+                    ProgressView()
+                        .padding()
+                }
+
                 Button(action: loginUser) {
                     Text("Login")
                         .frame(maxWidth: .infinity)
@@ -46,30 +53,32 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .cornerRadius(8)
                 }
+                .disabled(isLoading)
                 .padding(.horizontal)
 
                 NavigationLink(destination: SignupView()) {
                     Text("Don't have an account? Sign Up")
                         .foregroundColor(.blue)
                 }
-                
+
+                NavigationLink(destination: WorkoutView(), isActive: $isLoggedIn) {
+                    EmptyView()
+                }
+
                 Spacer()
             }
             .padding()
-            .navigationDestination(isPresented: $isLoggedIn) {
-                HomeView(username: username)
-            }
         }
     }
 
     /// Function to handle login
     func loginUser() {
-        guard !email.isEmpty, !password.isEmpty else {
+        guard !username.isEmpty, !password.isEmpty else {
             errorMessage = "Please fill in all fields."
             return
         }
 
-        guard let url = URL(string: "http://localhost:9090/v1/user/login/\(email)") else {
+        guard let url = URL(string: "http://localhost:9090/v1/user/login/\(username)") else {
             errorMessage = "Invalid server URL"
             return
         }
@@ -85,8 +94,12 @@ struct LoginView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
 
+        isLoading = true
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
+                isLoading = false
+
                 if let error = error {
                     self.errorMessage = "Network error: \(error.localizedDescription)"
                     return
@@ -100,10 +113,18 @@ struct LoginView: View {
                 if httpResponse.statusCode == 200 {
                     do {
                         let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                        if let username = json?["username"] as? String {
-                            self.username = username
+
+                        if let user = json?["user"] as? [String: Any],
+                           let token = user["token"] as? String,
+                           let name = user["username"] as? String {
+
+                            self.storedUsername = name
+                            self.authToken = token
                             self.isLoggedIn = true
+                        } else {
+                            self.errorMessage = "Invalid response data"
                         }
+
                     } catch {
                         self.errorMessage = "Error parsing response"
                     }
@@ -113,11 +134,10 @@ struct LoginView: View {
             }
         }.resume()
     }
-
 }
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
     }
-} 
+}

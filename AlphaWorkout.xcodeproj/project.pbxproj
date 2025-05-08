@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4FDB84D62DCC05C700D89191 /* Untitled.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDB84D52DCC05C100D89191 /* Untitled.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		4FDB84D52DCC05C100D89191 /* Untitled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Untitled.swift; sourceTree = "<group>"; };
 		6C0ED3472D52A4CD0082A390 /* AlphaWorkout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlphaWorkout.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -45,6 +50,7 @@
 		6C0ED33E2D52A4CD0082A390 = {
 			isa = PBXGroup;
 			children = (
+				4FDB84D52DCC05C100D89191 /* Untitled.swift */,
 				6C0ED3492D52A4CD0082A390 /* AlphaWorkout */,
 				6C0ED3482D52A4CD0082A390 /* Products */,
 			);
@@ -132,6 +138,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4FDB84D62DCC05C700D89191 /* Untitled.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

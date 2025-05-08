@@ -1,163 +1,312 @@
 import SwiftUI
 
-struct Workout: Identifiable, Hashable {
-    let id = UUID()
-    let name: String
-}
-
 struct LogWorkoutView: View {
-    @State private var selectedWorkout: Workout? = nil
-    @State private var showWorkoutPicker = false
-    @State private var showExercisePicker = false
+    var onFinish: (Routine) -> Void
 
-    let mockWorkouts = [
-        Workout(name: "Full Body Burn"),
-        Workout(name: "Upper Body Strength"),
-        Workout(name: "Leg Day Crusher"),
-        Workout(name: "Cardio Core Blast"),
-        Workout(name: "Push Pull Routine")
+    @Environment(\.dismiss) var dismiss
+    @State private var routineExercises: [ExerciseInRoutine] = []
+    @State private var showExercisePicker = false
+    @State private var newRoutineName: String = ""
+
+    @State private var editingExercise: ExerciseInRoutine?
+    @State private var editingIndex: Int?
+
+    let mockExercises = [
+        Exercise(name: "Push-Up"),
+        Exercise(name: "Squat"),
+        Exercise(name: "Deadlift"),
+        Exercise(name: "Pull-Up"),
+        Exercise(name: "Bench Press")
     ]
+
+    var totalSets: Int {
+        routineExercises.reduce(0) { $0 + $1.sets }
+    }
+
+    var totalVolume: Int {
+        routineExercises.reduce(0) { $0 + ($1.sets * $1.reps * $1.weight) }
+    }
 
     var body: some View {
         VStack {
+            // Header
             HStack {
-                VStack(alignment: .leading) {
-                    Text("Log Workout")
-                        .font(.headline)
-                    if let workout = selectedWorkout {
-                        Text(workout.name)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
-                }
+                Text("Create Routine")
+                    .font(.largeTitle)
+                    .bold()
                 Spacer()
                 Button("Finish") {
-                    // Finish workout action
+                    let routine = Routine(
+                        name: newRoutineName.isEmpty ? "Untitled Routine" : newRoutineName,
+                        workouts: routineExercises.map {
+                            Workout(
+                                name: $0.exercise.name,
+                                sets: $0.sets,
+                                reps: $0.reps,
+                                weight: $0.weight
+                            )
+                        }
+                    )
+                    onFinish(routine)
+                    dismiss()
                 }
-                .padding(.horizontal)
+                .disabled(routineExercises.isEmpty)
             }
             .padding()
 
+            // Routine name input
+            TextField("Enter Routine Name", text: $newRoutineName)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+
+            // Metrics
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Duration")
-                    Text("1s")
+                    Text("Volume")
+                    Text("\(totalVolume) lbs")
                         .foregroundColor(.blue)
                 }
                 Spacer()
                 VStack(alignment: .leading) {
-                    Text("Volume")
-                    Text("0 lbs")
-                }
-                Spacer()
-                VStack(alignment: .leading) {
                     Text("Sets")
-                    Text("0")
+                    Text("\(totalSets)")
                 }
             }
             .padding(.horizontal)
 
-            Spacer()
+            Divider()
 
-            VStack(spacing: 16) {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.gray)
+            // Exercise List
+            List {
+                ForEach(Array(routineExercises.enumerated()), id: \.element.id) { index, item in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(item.exercise.name)
+                                .font(.headline)
+                            Spacer()
+                            Button("Edit") {
+                                editingExercise = item
+                                editingIndex = index
+                            }
+                            .foregroundColor(.blue)
+                        }
 
-                Text(selectedWorkout == nil ? "Choose a workout" : "Get started")
-                    .font(.headline)
-
-                Text(selectedWorkout == nil
-                     ? "Select a workout routine to begin"
-                     : "Add an exercise to start your workout")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-
-                if selectedWorkout == nil {
-                    Button(action: {
-                        showWorkoutPicker = true
-                    }) {
-                        Text("+ Choose Workout")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
+                        HStack {
+                            Text("Sets: \(item.sets)")
+                            Text("Reps: \(item.reps)")
+                            Text("Weight: \(item.weight) lbs")
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                     }
-                } else {
-                    Button(action: {
-                        showExercisePicker = true
-                    }) {
-                        Text("+ Add Exercise")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
-                    }
+                    .padding(.vertical, 4)
                 }
+                .onDelete { indexSet in
+                    routineExercises.remove(atOffsets: indexSet)
+                }
+            }
 
-                HStack {
-                    Button("Settings") {
-                        // Workout settings
-                    }
+            // Add Exercise Button
+            Button(action: {
+                showExercisePicker = true
+            }) {
+                Text("+ Add Exercise")
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color(.systemGray5))
+                    .background(Color.blue)
+                    .foregroundColor(.white)
                     .cornerRadius(10)
-
-                    Button("Discard Workout") {
-                        selectedWorkout = nil
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .foregroundColor(.red)
-                    .cornerRadius(10)
-                }
-                .padding(.horizontal)
+                    .padding(.horizontal)
             }
 
             Spacer()
         }
-        .sheet(isPresented: $showWorkoutPicker) {
-            WorkoutPickerView(
-                workouts: mockWorkouts,
-                onSelect: { workout in
-                    selectedWorkout = workout
-                    showWorkoutPicker = false
-                }
-            )
-        }
         .sheet(isPresented: $showExercisePicker) {
-            Text("Exercise Picker Placeholder")
+            ExercisePickerView(exercises: mockExercises) { exercise in
+                let newItem = ExerciseInRoutine(exercise: exercise)
+                routineExercises.append(newItem)
+                showExercisePicker = false
+            }
+        }
+        .sheet(item: $editingExercise) { exercise in
+            EditExerciseView(exercise: exercise) { updatedExercise in
+                if let index = editingIndex {
+                    routineExercises[index] = updatedExercise
+                }
+                editingExercise = nil
+                editingIndex = nil
+            }
         }
     }
 }
 
-struct WorkoutPickerView: View {
-    let workouts: [Workout]
-    let onSelect: (Workout) -> Void
+// MARK: - Supporting Models
+struct ExerciseInRoutine: Identifiable, Equatable {
+    let id = UUID()
+    var exercise: Exercise
+    var sets: Int = 3
+    var reps: Int = 10
+    var weight: Int = 50
+}
+
+// MARK: - Supporting Models
+
+struct Exercise: Hashable {
+    let name: String
+}
+
+
+// MARK: - Picker
+
+struct ExercisePickerView: View {
+    let exercises: [Exercise]
+    let onSelect: (Exercise) -> Void
 
     var body: some View {
         NavigationView {
-            List(workouts, id: \.self) { workout in
-                Button(action: {
-                    onSelect(workout)
-                }) {
-                    Text(workout.name)
+            List(exercises, id: \.self) { exercise in
+                Button(exercise.name) {
+                    onSelect(exercise)
                 }
             }
-            .navigationTitle("Choose Workout")
+            .navigationTitle("Choose Exercise")
         }
     }
 }
 
-struct LogWorkoutView_Previews: PreviewProvider {
-    static var previews: some View {
-        LogWorkoutView()
-            .preferredColorScheme(.dark)
+// MARK: - Edit View
+
+struct EditExerciseView: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var setsText: String
+    @State private var repsText: String
+    @State private var weightText: String
+    var original: ExerciseInRoutine
+    var onSave: (ExerciseInRoutine) -> Void
+
+    init(exercise: ExerciseInRoutine, onSave: @escaping (ExerciseInRoutine) -> Void) {
+        self.original = exercise
+        self._setsText = State(initialValue: String(exercise.sets))
+        self._repsText = State(initialValue: String(exercise.reps))
+        self._weightText = State(initialValue: String(exercise.weight))
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Exercise")) {
+                    Text(original.exercise.name)
+                        .font(.headline)
+                }
+
+                Section(header: Text("Edit Values")) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Sets
+                        Text("Sets")
+                        HStack {
+                            Button(action: {
+                                if let sets = Int(setsText), sets > 1 {
+                                    setsText = "\(sets - 1)"
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                            }
+
+                            TextField("Sets", text: $setsText)
+                                .keyboardType(.numberPad)
+                                .frame(width: 50)
+                                .multilineTextAlignment(.center)
+
+                            Button(action: {
+                                if let sets = Int(setsText) {
+                                    setsText = "\(sets + 1)"
+                                }
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                            }
+                        }
+
+                        // Reps
+                        Text("Reps")
+                        HStack {
+                            Button(action: {
+                                if let reps = Int(repsText), reps > 1 {
+                                    repsText = "\(reps - 1)"
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                            }
+
+                            TextField("Reps", text: $repsText)
+                                .keyboardType(.numberPad)
+                                .frame(width: 50)
+                                .multilineTextAlignment(.center)
+
+                            Button(action: {
+                                if let reps = Int(repsText) {
+                                    repsText = "\(reps + 1)"
+                                }
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                            }
+                        }
+
+                        // Weight
+                        Text("Weight (lbs)")
+                        HStack {
+                            Button(action: {
+                                if let weight = Int(weightText), weight > 0 {
+                                    weightText = "\(weight - 5)"
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                            }
+
+                            TextField("Weight", text: $weightText)
+                                .keyboardType(.numberPad)
+                                .frame(width: 60)
+                                .multilineTextAlignment(.center)
+
+                            Button(action: {
+                                if let weight = Int(weightText) {
+                                    weightText = "\(weight + 5)"
+                                }
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Edit Exercise")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let updated = ExerciseInRoutine(
+                            exercise: original.exercise,
+                            sets: Int(setsText) ?? original.sets,
+                            reps: Int(repsText) ?? original.reps,
+                            weight: Int(weightText) ?? original.weight
+                        )
+                        onSave(updated)
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
+
+
+struct LogWorkoutView_Previews: PreviewProvider {
+    static var previews: some View {
+        LogWorkoutView { _ in }
+    }
+}
+

@@ -2,16 +2,27 @@ import SwiftUI
 
 struct SignupView: View {
     @State private var username: String = ""
-    @State private var name: String = ""
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var phone: String = ""
+    @State private var userType: String = "USER"
+
     @State private var age: String = "0"
     @State private var height: String = "0"
     @State private var currweight: String = "0"
+
+    @State private var city: String = ""
+    @State private var state: String = ""
+    @State private var pincode: String = ""
+
     @State private var month: Int = 1
     @State private var day: Int = 1
     @State private var year: Int = 2000
+
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
+
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
     @State private var showSuccessModal: Bool = false
@@ -28,7 +39,10 @@ struct SignupView: View {
 
                     Group {
                         InputField(label: "Username", text: $username, placeholder: "Enter username")
-                        InputField(label: "Full Name", text: $name, placeholder: "Enter full name")
+                        InputField(label: "First Name", text: $firstName, placeholder: "Enter first name")
+                        InputField(label: "Last Name", text: $lastName, placeholder: "Enter last name")
+                        InputField(label: "Phone", text: $phone, placeholder: "Enter phone number", keyboardType: .phonePad)
+                        InputField(label: "User Type (USER or ADMIN)", text: $userType, placeholder: "Enter user type")
                         InputField(label: "Age", text: $age, placeholder: "Enter age", keyboardType: .numberPad)
                         InputField(label: "Height (cm)", text: $height, placeholder: "Enter height", keyboardType: .numberPad)
                         InputField(label: "Current Weight (kg)", text: $currweight, placeholder: "Enter weight", keyboardType: .numberPad)
@@ -59,9 +73,15 @@ struct SignupView: View {
                     }
                     .padding(.horizontal)
 
-                    InputField(label: "Email", text: $email, placeholder: "Enter email", keyboardType: .emailAddress)
-                    InputField(label: "Password", text: $password, placeholder: "Enter password", isSecure: true)
-                    InputField(label: "Confirm Password", text: $confirmPassword, placeholder: "Confirm password", isSecure: true)
+                    Group {
+                        InputField(label: "City", text: $city, placeholder: "Enter city")
+                        InputField(label: "State", text: $state, placeholder: "Enter state")
+                        InputField(label: "Pincode", text: $pincode, placeholder: "Enter pincode", keyboardType: .numberPad)
+
+                        InputField(label: "Email", text: $email, placeholder: "Enter email", keyboardType: .emailAddress)
+                        InputField(label: "Password", text: $password, placeholder: "Enter password", isSecure: true)
+                        InputField(label: "Confirm Password", text: $confirmPassword, placeholder: "Confirm password", isSecure: true)
+                    }
 
                     if showError {
                         Text(errorMessage)
@@ -85,11 +105,11 @@ struct SignupView: View {
             }
             .ignoresSafeArea(.keyboard)
             .navigationDestination(isPresented: $navigateToLogin) {
-                LoginView() // Redirects to LoginView when navigateToLogin is true
+                LoginView()
             }
             .alert("Account Created Successfully!", isPresented: $showSuccessModal) {
                 Button("OK") {
-                    navigateToLogin = true // Redirect to login when OK is clicked
+                    navigateToLogin = true
                 }
             } message: {
                 Text("You can now log in with your new account.")
@@ -98,7 +118,7 @@ struct SignupView: View {
     }
 
     func signupUser() {
-        guard let url = URL(string: "http://localhost:9090/v1/user/create") else {
+        guard let url = URL(string:  "http://localhost:9090/v1/user/create") else {
             errorMessage = "Invalid server URL"
             showError = true
             return
@@ -112,13 +132,25 @@ struct SignupView: View {
 
         let userData: [String: Any] = [
             "username": username,
-            "name": name,
+            "fname": firstName,
+            "lname": lastName,
+            "password": password,
+            "email": email,
+            "phone": phone,
+            "user_type": userType,
             "age": Int(age) ?? 0,
             "height": Int(height) ?? 0,
             "currweight": Int(currweight) ?? 0,
-            "birthdate": ["month": month, "day": day, "year": year],
-            "email": email,
-            "password": password
+            "birthdate": [
+                "month": month,
+                "day": day,
+                "year": year
+            ],
+            "address": [
+                "city": city,
+                "state": state,
+                "pincode": Int(pincode) ?? 0
+            ]
         ]
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: userData) else {
@@ -147,7 +179,7 @@ struct SignupView: View {
                 }
 
                 if httpResponse.statusCode == 200 {
-                    showSuccessModal = true // Show success modal
+                    showSuccessModal = true
                 } else {
                     errorMessage = "Signup failed. Status code: \(httpResponse.statusCode)"
                     showError = true
