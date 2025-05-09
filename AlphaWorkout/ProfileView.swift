@@ -40,39 +40,32 @@ struct ProfileView: View {
                             }
                             VStack {
                                 Text("0").bold()
-                                Text("Followers")
+                                Text("Volume")
                             }
                             VStack {
                                 Text("0").bold()
-                                Text("Following")
+                                Text("Reps")
                             }
                         }
                         .foregroundColor(.gray)
                     }
 
                     // Profile Completion
-                    Button(action: {}) {
-                        HStack {
-                            Text("Your profile is \(Int(profileCompletion * 100))% finished")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .padding()
-                        .background(Color(.systemBlue).opacity(0.2))
-                        .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
+//                    Button(action: {}) {
+//                        HStack {
+//                            Text("Your profile is \(Int(profileCompletion * 100))% finished")
+//                            Spacer()
+//                            Image(systemName: "chevron.right")
+//                        }
+//                        .padding()
+//                        .background(Color(.systemBlue).opacity(0.2))
+//                        .cornerRadius(10)
+//                    }
+//                    .padding(.horizontal)
 
                     // Chart and Filter Buttons
                     VStack(alignment: .leading) {
                         UserDataPoints()
-
-                        HStack {
-                            Button("Duration") {}.buttonStyle(FilterButtonStyle(selected: true))
-                            Button("Volume") {}.buttonStyle(FilterButtonStyle())
-                            Button("Reps") {}.buttonStyle(FilterButtonStyle())
-                        }
-                        .padding(.horizontal)
                     }
 
                     // Dashboard Buttons

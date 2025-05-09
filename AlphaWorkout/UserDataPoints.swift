@@ -95,21 +95,137 @@ struct LineChart: View {
     }
 }
 
+enum ChartType {
+    case points, volume, reps
+}
+
 struct UserDataPoints: View {
-    @StateObject private var loader = WorkoutDataLoader()
+    @State private var chartType: ChartType = .points
+
+    @StateObject private var pointsLoader = WorkoutDataLoader()
+    @StateObject private var volumeLoader = VolumeDataLoader()
+    @StateObject private var repsLoader = RepsDataLoader()
 
     var body: some View {
         VStack {
-            Text("All-Time Workout Points")
+            Text("All-Time Workout Data")
                 .font(.headline)
-            if loader.data.isEmpty {
-                Text("No data found.")
-                    .foregroundColor(.gray)
-            } else {
-                LineChart(data: loader.data)
+
+            HStack {
+                Button("Points") {
+                    chartType = .points
+                }.buttonStyle(FilterButtonStyle(selected: chartType == .points))
+
+                Button("Volume") {
+                    chartType = .volume
+                }.buttonStyle(FilterButtonStyle(selected: chartType == .volume))
+
+                Button("Reps") {
+                    chartType = .reps
+                }.buttonStyle(FilterButtonStyle(selected: chartType == .reps))
+            }
+
+            switch chartType {
+            case .points:
+                if pointsLoader.data.isEmpty {
+                    Text("No data found.").foregroundColor(.gray)
+                } else {
+                    LineChart(data: pointsLoader.data)
+                }
+            case .volume:
+                if volumeLoader.data.isEmpty {
+                    Text("No data found.").foregroundColor(.gray)
+                } else {
+                    VolumeBarChart(data: volumeLoader.data)
+                }
+            case .reps:
+                if repsLoader.data.isEmpty {
+                    Text("No data found.").foregroundColor(.gray)
+                } else {
+                    RepsBarChart(data: repsLoader.data)
+                }
             }
         }
         .padding()
+    }
+}
+
+
+struct VolumeDataPoint: Identifiable, Decodable {
+    let id = UUID()
+    let date: Date
+    let volume: Int
+}
+
+struct RepsDataPoint: Identifiable, Decodable {
+    let id = UUID()
+    let date: Date
+    let reps: Int
+}
+
+struct VolumeBarChart: View {
+    let data: [VolumeDataPoint]
+
+    var body: some View {
+        Chart(data) { point in
+            BarMark(
+                x: .value("Date", point.date.shortString()),
+                y: .value("Volume", point.volume)
+            )
+        }
+        .frame(height: 200)
+        .padding()
+    }
+}
+
+struct RepsBarChart: View {
+    let data: [RepsDataPoint]
+
+    var body: some View {
+        Chart(data) { point in
+            BarMark(
+                x: .value("Date", point.date.shortString()),
+                y: .value("Reps", point.reps)
+            )
+        }
+        .frame(height: 200)
+        .padding()
+    }
+}
+
+class VolumeDataLoader: ObservableObject {
+    @Published var data: [VolumeDataPoint] = []
+
+    init() {
+        load()
+    }
+
+    func load() {
+        guard let url = Bundle.main.url(forResource: "UserVolume", withExtension: "json"),
+              let jsonData = try? Data(contentsOf: url),
+              let decoded = try? JSONDecoder.withDateFormat().decode([VolumeDataPoint].self, from: jsonData) else {
+            print("❌ Failed to load UserVolume.json")
+            return
+        }
+        self.data = decoded.sorted { $0.date < $1.date }
+    }
+}
+
+class RepsDataLoader: ObservableObject {
+    @Published var data: [RepsDataPoint] = []
+
+    init() {
+        load()
+    }
+
+    func load() {
+        guard let url = Bundle.main.url(forResource: "UserReps", withExtension: "json"),
+              let jsonData = try? Data(contentsOf: url),
+              let decoded = try? JSONDecoder.withDateFormat().decode([RepsDataPoint].self, from: jsonData) else {
+            print("❌ Failed to load UserReps.json")
+            return
+        }
+        self.data = decoded.sorted { $0.date < $1.date }
     }
 }
 
